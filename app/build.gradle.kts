@@ -22,22 +22,20 @@ android {
         compose = true
     }
 
-    // مهم جداً: توحيد Java على JVM 17
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    // مهم جداً: توحيد Kotlin على JVM 17
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     packaging {
         resources {
             excludes += "/META-INF/AL2.0"
             excludes += "/META-INF/LGPL2.1"
         }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 
@@ -64,7 +62,6 @@ dependencies {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 
-    // Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
