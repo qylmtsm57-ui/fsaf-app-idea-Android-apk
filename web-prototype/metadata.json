@@ -1,0 +1,6 @@
+{
+  "name": "Android Auth & Cloud Services Manager (Compose & Kotlin)",
+  "description": "Production-ready Android Authentication & Cloud Services Management system built with Kotlin, Jetpack Compose, MVVM Architecture, StateFlow, Firebase Auth (OAuth & Email/Password), and Cloud Providers Sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
