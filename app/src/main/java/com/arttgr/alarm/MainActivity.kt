@@ -1,7 +1,6 @@
 package com.arttgr.alarm
 
 import android.Manifest
-import android.app.AlarmManager
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -23,15 +22,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
+@OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
+
     private val notificationPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         NotificationChannels.ensure(this)
+
         if (Build.VERSION.SDK_INT >= 33) {
-            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            notificationPermission.launch(
+                Manifest.permission.POST_NOTIFICATIONS
+            )
         }
 
         setContent {
@@ -43,58 +50,115 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun AlarmApp() {
-        val dao = remember { AppDatabase.get(this).alarmDao() }
-        val alarms by dao.observeAll().collectAsStateWithLifecycle(emptyList())
+        val dao = remember {
+            AppDatabase.get(this).alarmDao()
+        }
+
+        val alarms by dao
+            .observeAll()
+            .collectAsStateWithLifecycle(emptyList())
+
         val scope = rememberCoroutineScope()
-        var showAdd by remember { mutableStateOf(false) }
+
+        var showAdd by remember {
+            mutableStateOf(false)
+        }
 
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("FreshStock Alarm") },
+                    title = {
+                        Text("FreshStock Alarm")
+                    },
                     actions = {
-                        IconButton(onClick = {
-                            if (Build.VERSION.SDK_INT >= 31) {
-                                startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+                        IconButton(
+                            onClick = {
+                                if (Build.VERSION.SDK_INT >= 31) {
+                                    startActivity(
+                                        Intent(
+                                            Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+                                        )
+                                    )
+                                }
                             }
-                        }) { Icon(Icons.Default.Alarm, contentDescription = "Exact alarm") }
+                        ) {
+                            Icon(
+                                Icons.Default.Alarm,
+                                contentDescription = "Exact alarm"
+                            )
+                        }
                     }
                 )
             },
             floatingActionButton = {
-                FloatingActionButton(onClick = { showAdd = true }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add alarm")
+                FloatingActionButton(
+                    onClick = {
+                        showAdd = true
+                    }
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Add alarm"
+                    )
                 }
             }
         ) { padding ->
+
             LazyColumn(
-                modifier = Modifier.padding(padding).fillMaxSize(),
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(alarms, key = { it.id }) { alarm ->
+
+                items(
+                    alarms,
+                    key = { it.id }
+                ) { alarm ->
+
                     AlarmCard(
                         alarm = alarm,
+
                         onToggle = { enabled ->
                             scope.launch {
-                                val updated = alarm.copy(enabled = enabled)
+                                val updated =
+                                    alarm.copy(enabled = enabled)
+
                                 dao.update(updated)
-                                if (enabled) AlarmScheduler(this@MainActivity).schedule(updated)
-                                else AlarmScheduler(this@MainActivity).cancel(alarm.id)
+
+                                if (enabled) {
+                                    AlarmScheduler(this@MainActivity)
+                                        .schedule(updated)
+                                } else {
+                                    AlarmScheduler(this@MainActivity)
+                                        .cancel(alarm.id)
+                                }
                             }
                         },
+
                         onDelete = {
                             scope.launch {
-                                AlarmScheduler(this@MainActivity).cancel(alarm.id)
+                                AlarmScheduler(this@MainActivity)
+                                    .cancel(alarm.id)
+
                                 dao.delete(alarm)
                             }
                         }
                     )
                 }
+
                 if (alarms.isEmpty()) {
                     item {
-                        Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
-                            Text("لا توجد منبهات. اضغط + لإضافة منبه.")
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "لا توجد منبهات. اضغط + لإضافة منبه."
+                            )
                         }
                     }
                 }
@@ -103,16 +167,28 @@ class MainActivity : ComponentActivity() {
 
         if (showAdd) {
             AddAlarmDialog(
-                onDismiss = { showAdd = false },
+                onDismiss = {
+                    showAdd = false
+                },
+
                 onSave = { hour, minute, label, repeatDays, snooze ->
                     scope.launch {
+
                         val id = dao.insert(
                             AlarmEntity(
-                                hour = hour, minute = minute, label = label,
-                                repeatDays = repeatDays, snoozeMinutes = snooze
+                                hour = hour,
+                                minute = minute,
+                                label = label,
+                                repeatDays = repeatDays,
+                                snoozeMinutes = snooze
                             )
                         )
-                        dao.get(id)?.let { AlarmScheduler(this@MainActivity).schedule(it) }
+
+                        dao.get(id)?.let {
+                            AlarmScheduler(this@MainActivity)
+                                .schedule(it)
+                        }
+
                         showAdd = false
                     }
                 }
@@ -128,17 +204,48 @@ class MainActivity : ComponentActivity() {
     ) {
         Card {
             Row(
-                Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(Modifier.weight(1f)) {
-                    Text(String.format("%02d:%02d", alarm.hour, alarm.minute), style = MaterialTheme.typography.headlineMedium)
-                    Text(alarm.label.ifBlank { "منبه" })
-                    if (alarm.repeatDays.isNotBlank()) Text("متكرر أسبوعيًا")
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        text = String.format(
+                            "%02d:%02d",
+                            alarm.hour,
+                            alarm.minute
+                        ),
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+
+                    Text(
+                        alarm.label.ifBlank {
+                            "منبه"
+                        }
+                    )
+
+                    if (alarm.repeatDays.isNotBlank()) {
+                        Text("متكرر أسبوعيًا")
+                    }
                 }
-                Switch(checked = alarm.enabled, onCheckedChange = onToggle)
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+
+                Switch(
+                    checked = alarm.enabled,
+                    onCheckedChange = onToggle
+                )
+
+                IconButton(
+                    onClick = onDelete
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete"
+                    )
                 }
             }
         }
@@ -147,58 +254,170 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun AddAlarmDialog(
         onDismiss: () -> Unit,
-        onSave: (Int, Int, String, String, Int) -> Unit
+        onSave: (
+            Int,
+            Int,
+            String,
+            String,
+            Int
+        ) -> Unit
     ) {
+
         val now = Calendar.getInstance()
-        var hour by remember { mutableIntStateOf(now.get(Calendar.HOUR_OF_DAY)) }
-        var minute by remember { mutableIntStateOf(now.get(Calendar.MINUTE)) }
-        var label by remember { mutableStateOf("") }
-        var repeat by remember { mutableStateOf("") }
-        var snooze by remember { mutableIntStateOf(10) }
+
+        var hour by remember {
+            mutableIntStateOf(
+                now.get(Calendar.HOUR_OF_DAY)
+            )
+        }
+
+        var minute by remember {
+            mutableIntStateOf(
+                now.get(Calendar.MINUTE)
+            )
+        }
+
+        var label by remember {
+            mutableStateOf("")
+        }
+
+        var repeat by remember {
+            mutableStateOf("")
+        }
+
+        var snooze by remember {
+            mutableIntStateOf(10)
+        }
 
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("إضافة منبه") },
+
+            title = {
+                Text("إضافة منبه")
+            },
+
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(
+                    verticalArrangement =
+                        Arrangement.spacedBy(12.dp)
+                ) {
+
+                    Row(
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+
                         Text("الساعة: ")
+
                         OutlinedTextField(
                             value = hour.toString(),
-                            onValueChange = { it.toIntOrNull()?.let { v -> hour = v.coerceIn(0, 23) } },
+
+                            onValueChange = {
+                                it.toIntOrNull()?.let { value ->
+                                    hour = value.coerceIn(0, 23)
+                                }
+                            },
+
                             modifier = Modifier.width(90.dp)
                         )
+
                         Text(" : ")
+
                         OutlinedTextField(
-                            value = minute.toString().padStart(2, '0'),
-                            onValueChange = { it.toIntOrNull()?.let { v -> minute = v.coerceIn(0, 59) } },
+                            value = minute
+                                .toString()
+                                .padStart(2, '0'),
+
+                            onValueChange = {
+                                it.toIntOrNull()?.let { value ->
+                                    minute = value.coerceIn(0, 59)
+                                }
+                            },
+
                             modifier = Modifier.width(90.dp)
                         )
                     }
+
                     OutlinedTextField(
                         value = label,
-                        onValueChange = { label = it },
-                        label = { Text("اسم المنبه") },
+
+                        onValueChange = {
+                            label = it
+                        },
+
+                        label = {
+                            Text("اسم المنبه")
+                        },
+
                         singleLine = true
                     )
+
                     OutlinedTextField(
                         value = repeat,
-                        onValueChange = { repeat = it.filter { c -> c.isDigit() || c == ',' } },
-                        label = { Text("أيام التكرار 1..7 مفصولة بفاصلة (اختياري)") },
-                        supportingText = { Text("1=الأحد، 7=السبت") }
+
+                        onValueChange = {
+                            repeat =
+                                it.filter { character ->
+                                    character.isDigit() ||
+                                        character == ','
+                                }
+                        },
+
+                        label = {
+                            Text(
+                                "أيام التكرار 1..7 مفصولة بفاصلة (اختياري)"
+                            )
+                        },
+
+                        supportingText = {
+                            Text(
+                                "1=الأحد، 7=السبت"
+                            )
+                        }
                     )
+
                     OutlinedTextField(
                         value = snooze.toString(),
-                        onValueChange = { it.toIntOrNull()?.let { v -> snooze = v.coerceIn(1, 60) } },
-                        label = { Text("الغفوة بالدقائق") },
+
+                        onValueChange = {
+                            it.toIntOrNull()?.let { value ->
+                                snooze =
+                                    value.coerceIn(1, 60)
+                            }
+                        },
+
+                        label = {
+                            Text("الغفوة بالدقائق")
+                        },
+
                         singleLine = true
                     )
                 }
             },
+
             confirmButton = {
-                Button(onClick = { onSave(hour, minute, label, repeat, snooze) }) { Text("حفظ") }
+                Button(
+                    onClick = {
+                        onSave(
+                            hour,
+                            minute,
+                            label,
+                            repeat,
+                            snooze
+                        )
+                    }
+                ) {
+                    Text("حفظ")
+                }
             },
-            dismissButton = { TextButton(onClick = onDismiss) { Text("إلغاء") } }
+
+            dismissButton = {
+                TextButton(
+                    onClick = onDismiss
+                ) {
+                    Text("إلغاء")
+                }
+            }
         )
     }
 }
